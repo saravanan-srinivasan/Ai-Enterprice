@@ -97,7 +97,7 @@ export interface InsightSummary {
 }
 
 export interface HealthStatus {
-  status: 'healthy' | 'degraded'
+  status: string 
   checks: Record<string, unknown>
   version: string
 }
