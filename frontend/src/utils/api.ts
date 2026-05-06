@@ -190,7 +190,7 @@ export const api = {
 
   // Health
   async getHealth(): Promise<HealthStatus> {
-    const r: AxiosResponse<HealthStatus> = await client.get('/health/ready')
+    const r: AxiosResponse<HealthStatus> = await client.get('/health')
     return r.data
   },
 }
