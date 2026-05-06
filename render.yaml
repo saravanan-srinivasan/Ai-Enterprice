@@ -38,13 +38,3 @@ services:
 
       - key: GROQ_API_KEY
         sync: false
-
-databases:
-  - name: enterprise-ai-db
-    databaseName: enterprise_ai
-    user: enterprise_user
-    plan: free
-
-caches:
-  - name: enterprise-ai-redis
-    plan: free
