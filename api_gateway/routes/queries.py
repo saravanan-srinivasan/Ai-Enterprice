@@ -47,16 +47,16 @@ async def submit_query(
     query_id = str(uuid.uuid4())
     orchestrator = get_orchestrator()
 
-    # Create pending record
-    record = QueryRecord(
-        id=uuid.UUID(query_id),
-        session_id=request.session_id,
-        question=request.question,
-        agent_type=request.agent_type.value,
-        status=QueryStatus.PROCESSING.value,
-    )
-    db.add(record)
-    await db.flush()
+    #  Create pending record
+    # record = QueryRecord(
+    #     id=uuid.UUID(query_id),
+    #     session_id=request.session_id,
+    #     question=request.question,
+    #     agent_type=request.agent_type.value,
+    #     status=QueryStatus.PROCESSING.value,
+    # )
+    # db.add(record)
+    # await db.flush()
 
     try:
         response = await orchestrator.process_query(
@@ -69,24 +69,24 @@ async def submit_query(
             filters=request.filters,
         )
 
-        # Persist completed record
-        record.answer = response.answer
-        record.status = QueryStatus.COMPLETED.value
-        record.sources = [s.model_dump() for s in response.sources]
-        record.confidence_score = response.confidence_score
-        record.tokens_used = response.tokens_used
-        record.latency_ms = response.latency_ms
-        record.cached = response.cached
-        record.completed_at = datetime.utcnow()
-        await db.flush()
+        #  Persist completed record
+        # record.answer = response.answer
+        # record.status = QueryStatus.COMPLETED.value
+        # record.sources = [s.model_dump() for s in response.sources]
+        # record.confidence_score = response.confidence_score
+        # record.tokens_used = response.tokens_used
+        # record.latency_ms = response.latency_ms
+        # record.cached = response.cached
+        # record.completed_at = datetime.utcnow()
+        # await db.flush()
 
         return response
 
     except Exception as exc:
-        record.status = QueryStatus.FAILED.value
-        record.error_message = str(exc)[:500]
-        record.completed_at = datetime.utcnow()
-        await db.flush()
+        # record.status = QueryStatus.FAILED.value
+        # record.error_message = str(exc)[:500]
+        # record.completed_at = datetime.utcnow()
+        # await db.flush()
         logger.error("query_endpoint_error", query_id=query_id, error=str(exc))
         raise HTTPException(status_code=500, detail=str(exc))
 
