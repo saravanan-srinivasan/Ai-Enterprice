@@ -123,27 +123,7 @@ async def request_context_middleware(request: Request, call_next):
 
 @app.middleware("http")
 async def rate_limit_middleware(request: Request, call_next):
-    """Per-IP rate limiting using Redis sliding window."""
-    # Skip rate limiting for health checks
-    if request.url.path in ("/health", "/metrics"):
-        return await call_next(request)
-
-    from utils.cache import cache_service
-    client_ip = request.client.host if request.client else "unknown"
-    allowed, remaining = await cache_service.check_rate_limit(client_ip)
-
-    if not allowed:
-        return JSONResponse(
-            status_code=429,
-            content={
-                "error": "Rate limit exceeded",
-                "detail": f"Maximum {settings.rate_limit_per_minute} requests per minute",
-            },
-            headers={"Retry-After": "60", "X-RateLimit-Remaining": "0"},
-        )
-
     response = await call_next(request)
-    response.headers["X-RateLimit-Remaining"] = str(remaining)
     return response
 
 
