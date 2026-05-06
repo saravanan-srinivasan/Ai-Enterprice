@@ -1,0 +1,136 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --bg-base:      #0a0b0e;
+    --bg-surface:   #0f1117;
+    --bg-elevated:  #161922;
+    --bg-overlay:   #1e2330;
+    --border:       rgba(255,255,255,0.07);
+    --border-mid:   rgba(255,255,255,0.12);
+    --text-primary: #e8eaf0;
+    --text-muted:   #6b7280;
+    --text-dim:     #4b5563;
+    --accent-blue:  #3b82f6;
+    --accent-cyan:  #06b6d4;
+    --accent-green: #10b981;
+    --accent-amber: #f59e0b;
+    --accent-red:   #ef4444;
+  }
+
+  * { box-sizing: border-box; }
+
+  html {
+    font-feature-settings: 'cv01', 'cv02', 'cv03', 'cv04', 'ss01', 'ss03';
+  }
+
+  body {
+    background-color: var(--bg-base);
+    color: var(--text-primary);
+    font-family: 'Inter', system-ui, sans-serif;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    line-height: 1.6;
+  }
+
+  ::-webkit-scrollbar { width: 6px; height: 6px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.12); border-radius: 3px; }
+  ::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,0.2); }
+}
+
+@layer components {
+  .glass {
+    background: rgba(255,255,255,0.03);
+    border: 1px solid var(--border);
+    backdrop-filter: blur(12px);
+  }
+
+  .glass-elevated {
+    background: rgba(255,255,255,0.05);
+    border: 1px solid var(--border-mid);
+    backdrop-filter: blur(16px);
+  }
+
+  .glow-blue  { box-shadow: 0 0 20px rgba(59,130,246,0.15); }
+  .glow-green { box-shadow: 0 0 20px rgba(16,185,129,0.15); }
+  .glow-amber { box-shadow: 0 0 20px rgba(245,158,11,0.15); }
+
+  .dot-grid {
+    background-image: radial-gradient(rgba(255,255,255,0.04) 1px, transparent 1px);
+    background-size: 28px 28px;
+  }
+
+  .shimmer-text {
+    background: linear-gradient(90deg, var(--text-muted) 25%, var(--text-primary) 50%, var(--text-muted) 75%);
+    background-size: 200% auto;
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    animation: shimmer 2s linear infinite;
+  }
+
+  .typing-cursor::after {
+    content: '▋';
+    animation: blink 1s step-end infinite;
+    opacity: 0.8;
+    margin-left: 1px;
+  }
+
+  .prose-dark {
+    color: var(--text-primary);
+    line-height: 1.7;
+  }
+  .prose-dark h1, .prose-dark h2, .prose-dark h3 {
+    color: #f1f3f8;
+    font-weight: 600;
+    margin-top: 1.5em;
+    margin-bottom: 0.5em;
+  }
+  .prose-dark h2 { font-size: 1.1rem; border-bottom: 1px solid var(--border); padding-bottom: 0.4em; }
+  .prose-dark p { margin-bottom: 0.9em; }
+  .prose-dark ul, .prose-dark ol { padding-left: 1.4em; margin-bottom: 0.9em; }
+  .prose-dark li { margin-bottom: 0.3em; }
+  .prose-dark strong { color: #d1d5db; font-weight: 600; }
+  .prose-dark code {
+    background: rgba(255,255,255,0.07);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    padding: 0.1em 0.4em;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.85em;
+    color: #93c5fd;
+  }
+  .prose-dark pre {
+    background: rgba(0,0,0,0.4);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 1em;
+    overflow-x: auto;
+    margin-bottom: 1em;
+  }
+  .prose-dark pre code { background: none; border: none; padding: 0; }
+  .prose-dark blockquote {
+    border-left: 3px solid var(--accent-blue);
+    padding-left: 1em;
+    color: var(--text-muted);
+    margin: 1em 0;
+    font-style: italic;
+  }
+
+  .status-dot {
+    width: 8px; height: 8px;
+    border-radius: 50%;
+    display: inline-block;
+  }
+  .status-dot.online  { background: var(--accent-green); box-shadow: 0 0 6px var(--accent-green); }
+  .status-dot.warning { background: var(--accent-amber); box-shadow: 0 0 6px var(--accent-amber); }
+  .status-dot.error   { background: var(--accent-red);   box-shadow: 0 0 6px var(--accent-red);   }
+}
+
+@keyframes blink { 0%,100% { opacity: 1 } 50% { opacity: 0 } }
+@keyframes shimmer { to { background-position: -200% center } }
+@keyframes fadeIn  { from { opacity: 0 } to { opacity: 1 } }
+@keyframes slideUp { from { opacity: 0; transform: translateY(12px) } to { opacity: 1; transform: translateY(0) } }
+@keyframes spin    { to { transform: rotate(360deg) } }

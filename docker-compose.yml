@@ -1,0 +1,126 @@
+version: '3.9'
+
+# ═══════════════════════════════════════════════════════════════
+# Enterprise AI Knowledge & Decision Assistant — Docker Compose
+# ═══════════════════════════════════════════════════════════════
+
+services:
+
+  # ── PostgreSQL ──────────────────────────────────────────────
+  postgres:
+    image: postgres:16-alpine
+    container_name: enterprise_ai_postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB:       enterprise_ai
+      POSTGRES_USER:     enterprise_user
+      POSTGRES_PASSWORD: enterprise_pass
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./scripts/init_db.sql:/docker-entrypoint-initdb.d/init.sql
+    ports:
+      - "5432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U enterprise_user -d enterprise_ai"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - enterprise_net
+
+  # ── Redis ────────────────────────────────────────────────────
+  redis:
+    image: redis:7-alpine
+    container_name: enterprise_ai_redis
+    restart: unless-stopped
+    command: >
+      redis-server
+      --maxmemory 512mb
+      --maxmemory-policy allkeys-lru
+      --save 60 1
+      --loglevel warning
+    volumes:
+      - redis_data:/data
+    ports:
+      - "6379:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+    networks:
+      - enterprise_net
+
+  # ── Backend API ──────────────────────────────────────────────
+  backend:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.backend
+    container_name: enterprise_ai_backend
+    restart: unless-stopped
+    env_file: .env
+    environment:
+      POSTGRES_HOST:    postgres
+      REDIS_HOST:       redis
+      DATABASE_URL:     postgresql+asyncpg://enterprise_user:enterprise_pass@postgres:5432/enterprise_ai
+      REDIS_URL:        redis://redis:6379/0
+      VECTOR_STORE_TYPE: chroma
+      CHROMA_PERSIST_DIR: /app/data/chroma
+      UPLOAD_DIR:        /app/data/uploads
+    volumes:
+      - app_data:/app/data
+      - ./data/sample:/app/data/sample:ro
+    ports:
+      - "8000:8000"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "curl -sf http://localhost:8000/health || exit 1"]
+      interval: 15s
+      timeout: 10s
+      retries: 5
+      start_period: 30s
+    networks:
+      - enterprise_net
+
+  # ── Frontend ─────────────────────────────────────────────────
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: ../docker/Dockerfile.frontend
+    container_name: enterprise_ai_frontend
+    restart: unless-stopped
+    ports:
+      - "3000:80"
+    depends_on:
+      backend:
+        condition: service_healthy
+    networks:
+      - enterprise_net
+
+  # ── Nginx Reverse Proxy ─────────────────────────────────────
+  nginx:
+    image: nginx:alpine
+    container_name: enterprise_ai_nginx
+    restart: unless-stopped
+    volumes:
+      - ./docker/nginx.conf:/etc/nginx/nginx.conf:ro
+    ports:
+      - "80:80"
+    depends_on:
+      - backend
+      - frontend
+    networks:
+      - enterprise_net
+
+volumes:
+  postgres_data:
+  redis_data:
+  app_data:
+
+networks:
+  enterprise_net:
+    driver: bridge

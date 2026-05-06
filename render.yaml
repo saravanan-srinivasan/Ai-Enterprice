@@ -1,0 +1,93 @@
+# ═══════════════════════════════════════════════════════════════════════════════
+# Render Deployment Configuration
+# ═══════════════════════════════════════════════════════════════════════════════
+# This file configures the FastAPI backend deployment on Render.com
+# Push this to your repository and connect it to Render for auto-deployment
+# ═══════════════════════════════════════════════════════════════════════════════
+
+services:
+  - type: web
+    name: enterprise-ai-backend
+    env: python
+    plan: standard
+    
+    # Build configuration
+    buildCommand: pip install -r requirements.txt
+    startCommand: uvicorn api_gateway.main:app --host 0.0.0.0 --port $PORT
+    
+    # Runtime configuration
+    pythonVersion: 3.11
+    preDeployCommand: |
+      # Create necessary directories for persistent storage
+      mkdir -p /opt/render/project/data/chroma
+      mkdir -p /opt/render/project/data/uploads
+      mkdir -p /opt/render/project/data/logs
+    
+    # Environment variables
+    envVars:
+      - key: APP_ENV
+        value: production
+      - key: DEBUG
+        value: "false"
+      - key: DATA_DIR
+        value: /opt/render/project/data
+      - key: LOG_LEVEL
+        value: INFO
+      - key: LOG_FORMAT
+        value: json
+      - key: VECTOR_STORE_TYPE
+        value: chroma
+      - key: EMBEDDING_MODEL
+        value: all-MiniLM-L6-v2
+      - key: LLM_MODEL
+        value: llama-3.3-70b-versatile
+      - key: LLM_MAX_TOKENS
+        value: "4096"
+      - key: LLM_TEMPERATURE
+        value: "0.1"
+      - key: CORS_ORIGINS
+        value: https://yourdomain.netlify.app
+      - key: WORKERS
+        value: "4"
+      - key: CACHE_TTL_SECONDS
+        value: "3600"
+      - key: RATE_LIMIT_PER_MINUTE
+        value: "60"
+    
+    # Secrets (set in Render dashboard)
+    # - DATABASE_URL (PostgreSQL connection string)
+    # - REDIS_URL (Redis connection string)
+    # - GROQ_API_KEY (Groq API key)
+    # - SECRET_KEY (FastAPI secret key)
+    
+    # Health check
+    healthCheckPath: /health
+    healthCheckInterval: 600
+    initialDeployTimeout: 600
+    
+    # Disk for persistent storage
+    disk:
+      name: data
+      mountPath: /opt/render/project/data
+      sizeGB: 10  # Adjust based on your needs
+    
+    # Scaling (optional)
+    # numInstances: 1
+    # autoscaling:
+    #   enabled: true
+    #   minInstances: 1
+    #   maxInstances: 3
+
+# Database service (PostgreSQL)
+databases:
+  - name: enterprise-ai-db
+    databaseName: enterprise_ai
+    user: enterprise_user
+    plan: standard
+    version: "16"
+
+# Cache service (Redis)
+caches:
+  - name: enterprise-ai-redis
+    plan: standard
+    version: "7"

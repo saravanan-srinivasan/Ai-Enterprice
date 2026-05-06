@@ -1,0 +1,85 @@
+# ═══════════════════════════════════════════════════════════════════════════════
+# Netlify Deployment Configuration
+# ═══════════════════════════════════════════════════════════════════════════════
+# This file configures the React/Vite frontend deployment on Netlify
+# Push to your repository and connect to Netlify for auto-deployment
+# ═══════════════════════════════════════════════════════════════════════════════
+
+[build]
+  # Directory containing built files to deploy
+  publish = "frontend/dist"
+  
+  # Build command
+  command = "cd frontend && npm install && npm run build"
+  
+  # Environment to use for builds
+  environment = { NODE_VERSION = "18", NODE_ENV = "production" }
+
+# Build-time environment variables
+[build.environment]
+  VITE_API_URL = "https://your-backend-render-url.onrender.com"
+
+# Development environment
+[dev]
+  command = "cd frontend && npm run dev"
+  port = 5173
+  publish = "frontend/dist"
+  targetPort = 5173
+  framework = "vite"
+
+# Deploy context: production
+[context.production]
+  command = "cd frontend && npm install && npm run build"
+  publish = "frontend/dist"
+  
+  [context.production.environment]
+    VITE_API_URL = "https://your-backend-render-url.onrender.com"
+
+# Deploy context: staging
+[context.staging]
+  command = "cd frontend && npm install && npm run build"
+  publish = "frontend/dist"
+  
+  [context.staging.environment]
+    VITE_API_URL = "https://staging-backend-render-url.onrender.com"
+
+# Deploy context: branch preview
+[context.branch-deploy]
+  command = "cd frontend && npm install && npm run build"
+  publish = "frontend/dist"
+  
+  [context.branch-deploy.environment]
+    VITE_API_URL = "https://preview-backend-render-url.onrender.com"
+
+# Redirect rules for SPA (single-page application)
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200
+
+# HTTP headers for security and caching
+[[headers]]
+  for = "/"
+  [headers.values]
+    X-Frame-Options = "DENY"
+    X-Content-Type-Options = "nosniff"
+    X-XSS-Protection = "1; mode=block"
+    Referrer-Policy = "strict-origin-when-cross-origin"
+    Permissions-Policy = "geolocation=(), microphone=(), camera=()"
+
+# Cache headers for static assets
+[[headers]]
+  for = "/assets/*"
+  [headers.values]
+    Cache-Control = "public, max-age=31536000, immutable"
+
+# No cache for index and service worker
+[[headers]]
+  for = "/index.html"
+  [headers.values]
+    Cache-Control = "no-cache, no-store, must-revalidate"
+
+[[headers]]
+  for = "/sw.js"
+  [headers.values]
+    Cache-Control = "no-cache, no-store, must-revalidate"

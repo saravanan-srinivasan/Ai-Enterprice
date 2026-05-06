@@ -1,0 +1,112 @@
+# ═══════════════════════════════════════════════════════════════════════════════
+# Python
+# ═══════════════════════════════════════════════════════════════════════════════
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+pip-wheel-metadata/
+share/python-wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
+
+# Virtual Environments
+venv/
+env/
+ENV/
+env.bak/
+venv.bak/
+.venv
+.env
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+*.iml
+
+# Testing
+.pytest_cache/
+.coverage
+htmlcov/
+.tox/
+.hypothesis/
+
+# Node / Frontend
+frontend/node_modules/
+frontend/dist/
+frontend/.vite/
+frontend/.env.local
+frontend/.env.*.local
+
+# Project-specific
+data/
+*.db
+*.sqlite
+*.sqlite3
+logs/
+*.log
+.cache/
+*.tmp
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Temporary files
+*.bak
+*.tmp
+*~
+
+# Sensitive
+.env.production.local
+.env.local
+.env.*.local
+secrets.json
+credentials.json
+
+# Docker
+.dockerignore
+docker-compose.override.yml
+
+# Build artifacts
+dist/
+build/
+*.egg-info/
+
+# Render
+.render/
+
+# Netlify
+.netlify/
+
+# Environment files (use .env.example instead)
+.env
+.env.development
+.env.staging
+.env.local
+
+# API keys and secrets should NEVER be committed
+GROQ_API_KEY
+OPENAI_API_KEY
+DATABASE_URL
+REDIS_URL
+SECRET_KEY
