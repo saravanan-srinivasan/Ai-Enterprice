@@ -72,17 +72,17 @@ class DocumentIngestor:
             )
 
         # ── Persist initial record ────────────────────────────────
-        record = DocumentRecord(
-            id=uuid.UUID(doc_id),
-            filename=f"{doc_id}_{filename}",
-            original_name=filename,
-            doc_type=ext,
-            file_size_bytes=len(file_bytes),
-            status=DocumentStatus.PROCESSING,
-            source_metadata=source_metadata or {},
-        )
-        db.add(record)
-        await db.flush()
+        # record = DocumentRecord(
+        #     id=uuid.UUID(doc_id),
+        #     filename=f"{doc_id}_{filename}",
+        #     original_name=filename,
+        #     doc_type=ext,
+        #     file_size_bytes=len(file_bytes),
+        #     status=DocumentStatus.PROCESSING,
+        #     source_metadata=source_metadata or {},
+        # )
+        # db.add(record)
+        # await db.flush()
         logger.info("ingestion_started", doc_id=doc_id, filename=filename)
 
         try:
@@ -139,9 +139,9 @@ class DocumentIngestor:
             )
 
         except Exception as exc:
-            record.status = DocumentStatus.FAILED
-            record.error_message = str(exc)[:1000]
-            await db.flush()
+            # record.status = DocumentStatus.FAILED
+            # record.error_message = str(exc)[:1000]
+            # await db.flush()
             metrics.increment("ingestion_failures", doc_type=ext)
             logger.error("ingestion_failed", doc_id=doc_id, filename=filename, error=str(exc))
             raise
