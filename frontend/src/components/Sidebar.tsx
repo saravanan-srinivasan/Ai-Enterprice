@@ -32,7 +32,7 @@ export default function Sidebar() {
     retry: false,
   })
 
-  const isOnline = health?.status === 'healthy'
+  const isOnline = health?.status === 'operational'
 
   return (
     <aside
