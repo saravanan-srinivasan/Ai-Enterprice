@@ -163,7 +163,11 @@ class GroqProvider(LLMProvider):
             )
 
         except Exception as exc:
-            logger.error("groq_api_error", error=str(exc), model=self._model)
+            error_str = str(exc).lower()
+            if "429" in error_str or "rate_limit" in error_str:
+                logger.warning("groq_rate_limit", error=str(exc))
+            else:
+                logger.error("groq_api_error", error=str(exc), model=self._model)
             metrics.increment("llm_failure", provider="groq")
             raise
 

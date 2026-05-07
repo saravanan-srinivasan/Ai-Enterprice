@@ -27,10 +27,10 @@
         ┌────────▼────────┐    ┌─────────▼──────────────┐
         │   RAG Pipeline  │    │     LLM Provider        │
         │  ─────────────  │    │  ────────────────────── │
-        │  EmbeddingEngine│    │  Anthropic Claude  ← primary
-        │  VectorStore    │    │  OpenAI GPT-4o     ← fallback
-        │  BM25 Retriever │    │  Retry + Fallback        │
-        │  RRF Fusion     │    │  Token Tracking          │
+        │  EmbeddingEngine│    │  Groq API (llama-3.3)   │
+        │  VectorStore    │    │  Free tier: 30 req/min  │
+        │  BM25 Retriever │    │  Retry + Rate Limiting  │
+        │  RRF Fusion     │    │  Token Tracking         │
         │  Compressor     │    └─────────────────────────┘
         └────────┬────────┘
                  │
@@ -55,7 +55,7 @@ enterprise-ai-assistant/
 ├── rag_pipeline/               # Retrieval-Augmented Generation
 │   ├── vector_store.py         # ChromaDB & FAISS backends + embeddings
 │   ├── retriever.py            # Hybrid BM25+semantic retrieval with RRF fusion
-│   ├── llm_provider.py         # Anthropic/OpenAI abstraction + retry/fallback
+│   ├── llm_provider.py         # Groq API provider with retry logic
 │   └── prompts.py              # Agent-specific prompt templates + guardrails
 │
 ├── agent_orchestrator/         # Multi-agent execution system
@@ -109,13 +109,22 @@ enterprise-ai-assistant/
 
 ## Quick Start
 
-### Option A — Docker (Recommended)
+### ✅ Production Deployment (Render + Netlify)
+
+**Ready to go live?** See [DEPLOYMENT_GUIDE.md](DEPLOYMENT_GUIDE.md) for complete instructions.
+
+- **Backend**: Render ($5/month)
+- **Frontend**: Netlify (free)
+- **LLM**: Groq (free tier available)
+- **Total Cost**: ~$17/month
+
+### Option A — Docker (Recommended for Local Dev)
 
 ```bash
 # 1. Clone and configure
 git clone <repo-url> && cd enterprise-ai-assistant
 cp .env.example .env
-# Edit .env — set ANTHROPIC_API_KEY (or OPENAI_API_KEY)
+# Edit .env — set GROQ_API_KEY from https://console.groq.com/api-keys (FREE)
 
 # 2. Start all services
 docker compose up -d
@@ -124,28 +133,36 @@ docker compose up -d
 docker compose exec backend python scripts/seed_data.py
 
 # 4. Open the app
-open http://localhost:3000          # React UI
+open http://localhost:5173          # React UI (Vite)
 open http://localhost:8000/docs     # API Swagger
 ```
 
 ### Option B — Local Development
 
 ```bash
-# 1. Run setup script (creates venv, installs deps, starts DB/Redis via Docker)
-chmod +x scripts/setup.sh && ./scripts/setup.sh
+# 1. Get Groq API key (FREE)
+# Visit: https://console.groq.com/api-keys
+# Sign up → Create API key → Copy it
 
-# 2. Activate env and set API key
-source .venv/bin/activate
-export ANTHROPIC_API_KEY=your-key-here
+# 2. Install dependencies
+pip install -r requirements.txt
+cd frontend && npm install && cd ..
 
-# 3. Start backend
+# 3. Set API key
+export GROQ_API_KEY="sk-your-key-here"
+
+# 4. Start backend (Terminal 1)
 uvicorn api_gateway.main:app --reload --port 8000
 
-# 4. Start frontend (in a new terminal)
+# 5. Start frontend (Terminal 2)
 cd frontend && npm run dev
+
+# Open: http://localhost:5173
 ```
 
 ---
+
+## 📚 Documentation
 
 ## API Reference
 
@@ -274,24 +291,40 @@ Embed query (sentence-transformers/all-MiniLM-L6-v2, dim=384)
 All settings are in `.env` (validated by Pydantic Settings on startup):
 
 ```env
-# Required
-ANTHROPIC_API_KEY=sk-ant-...
+# Required - Get FREE API key from https://console.groq.com/api-keys
+GROQ_API_KEY=sk-...
 
-# LLM
-LLM_PROVIDER=anthropic              # anthropic | openai | gemini
-LLM_MODEL=claude-sonnet-4-20250514
+# LLM (Groq-only)
+LLM_MODEL=llama-3.3-70b-versatile
 LLM_TEMPERATURE=0.1
+LLM_MAX_TOKENS=4096
+LLM_TIMEOUT_SECONDS=60
 
 # RAG tuning
 TOP_K_RETRIEVAL=5
 CHUNK_SIZE=512
 CHUNK_OVERLAP=64
 
+# Database & Cache
+DATABASE_URL=postgresql+asyncpg://...  # Auto-provided by Render
+REDIS_URL=redis://...                  # Auto-provided by Render
+
+# Frontend Access
+CORS_ORIGINS=https://your.netlify.app,http://localhost:5173
+
 # Performance
 CACHE_TTL_SECONDS=3600
 RATE_LIMIT_PER_MINUTE=60
 AGENT_TIMEOUT_SECONDS=120
+WORKERS=1  # Keep at 1 for Render Starter plan
+
+# Storage
+DATA_DIR=/opt/render/project/data
+
+# See .env.example for all available options
 ```
+
+See [.env.example](.env.example) for complete documentation.
 
 ---
 
@@ -323,19 +356,29 @@ The test suite covers:
 
 ---
 
-## Production Checklist
+## Production Deployment
 
-- [ ] Set a strong `SECRET_KEY` (≥ 32 random chars)
-- [ ] Use secrets manager (AWS Secrets Manager / Vault) for `ANTHROPIC_API_KEY`
-- [ ] Enable TLS on Nginx (`certbot` / ACM)
-- [ ] Set `APP_ENV=production` and `DEBUG=false`
-- [ ] Configure Postgres with proper password and restricted network access
-- [ ] Enable Redis `requirepass` and TLS
-- [ ] Set up log shipping (Datadog / CloudWatch / ELK)
-- [ ] Wire Prometheus scrape to `/metrics` endpoint
-- [ ] Set `CORS_ORIGINS` to your actual domain
-- [ ] Review `RATE_LIMIT_PER_MINUTE` for your expected load
-- [ ] Run `pytest tests/` in CI before every deploy
+This project is **production-ready** and can be deployed to Render + Netlify in 15 minutes.
+
+**See [DEPLOYMENT_GUIDE.md](DEPLOYMENT_GUIDE.md) for complete step-by-step instructions.**
+
+### Pre-Deployment Checklist
+
+- [ ] Get Groq API key: https://console.groq.com/api-keys (FREE)
+- [ ] Set environment variables (see `.env.example`)
+- [ ] Run local tests: `pytest tests/ -v`
+- [ ] Test locally: `bash deploy.sh`
+- [ ] See [CHECKLIST.md](CHECKLIST.md) for full validation
+
+### Deployment Targets
+
+| Component | Platform | Cost | Setup Time |
+|-----------|----------|------|-----------|
+| Backend (FastAPI) | Render | $5/month | 5 min |
+| Frontend (React) | Netlify | Free | 5 min |
+| Database | Render PostgreSQL | $7/month | Auto |
+| Cache | Render Redis | $5/month | Auto |
+| **Total** | | **~$17/month** | **15 min** |
 
 ---
 
@@ -344,8 +387,8 @@ The test suite covers:
 | Layer | Technology |
 |-------|-----------|
 | Backend framework | FastAPI (async) + Uvicorn + uvloop |
-| LLM providers | Anthropic Claude, OpenAI GPT-4o |
-| Embeddings | sentence-transformers (`all-MiniLM-L6-v2`) |
+| LLM provider | **Groq API** (llama-3.3-70b-versatile) |
+| Embeddings | sentence-transformers (`all-MiniLM-L6-v2`, local, no API) |
 | Vector store | ChromaDB (default) or FAISS |
 | Keyword search | rank-bm25 (BM25Okapi) |
 | Database | PostgreSQL 16 + SQLAlchemy async |
@@ -355,7 +398,8 @@ The test suite covers:
 | Frontend | React 18, TypeScript, Vite, Tailwind CSS |
 | State management | Zustand + TanStack Query |
 | Charts | Recharts |
-| Container | Docker + Docker Compose + Nginx |
+| Deployment | Render (backend) + Netlify (frontend) |
+| Container | Docker + Docker Compose + Nginx (optional) |
 | Testing | pytest + pytest-asyncio + httpx |
 
 ---

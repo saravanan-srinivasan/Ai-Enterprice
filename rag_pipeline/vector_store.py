@@ -10,11 +10,14 @@ from __future__ import annotations
 import json
 import os
 from abc import ABC, abstractmethod
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any, Dict, List, Optional, Tuple, TYPE_CHECKING
 
 import numpy as np
 
 from utils.config import settings
+
+if TYPE_CHECKING:
+    from sentence_transformers import SentenceTransformer
 from utils.logger import get_logger, metrics
 from utils.models import ChunkMetadata
 
@@ -29,7 +32,7 @@ class EmbeddingEngine:
     """
 
     _instance: Optional[EmbeddingEngine] = None
-    _model: Optional[SentenceTransformer] = None
+    _model: Optional[Any] = None
 
     def __new__(cls) -> EmbeddingEngine:
         if cls._instance is None:
